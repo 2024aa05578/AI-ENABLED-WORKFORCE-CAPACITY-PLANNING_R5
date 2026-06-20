@@ -40,20 +40,13 @@ def calculate_workforce(
         dc_growth = params["DC"]
         attrition = params["Attrition"]
 
-        # Current Workload
-
         current_hours = (
-            row["Breakdown_WO"] *
-            row["Breakdown_Hrs"]
+            row["Breakdown_WO"] * row["Breakdown_Hrs"]
             +
-            row["PM_WO"] *
-            row["PM_Hrs"]
+            row["PM_WO"] * row["PM_Hrs"]
             +
-            row["Startup_WO"] *
-            row["Startup_Hrs"]
+            row["Startup_WO"] * row["Startup_Hrs"]
         )
-
-        # Future Workload
 
         future_hours = (
             current_hours *
@@ -64,14 +57,10 @@ def calculate_workforce(
             )
         )
 
-        # Required Engineers
-
         required_engineers = (
             future_hours /
             effective_capacity
         )
-
-        # Available Engineers
 
         available_engineers = (
             row["Current_SE"] *
@@ -80,8 +69,6 @@ def calculate_workforce(
                 attrition / 100
             )
         )
-
-        # Hiring Gap
 
         additional_required = max(
             math.ceil(
