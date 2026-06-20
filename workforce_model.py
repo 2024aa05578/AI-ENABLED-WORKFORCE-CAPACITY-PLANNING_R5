@@ -5,16 +5,25 @@ PRODUCTIVE_HOURS_PER_DAY = 7
 WORKING_DAYS_PER_MONTH = 20
 MONTHS_PER_YEAR = 12
 
-ANNUAL_CAPACITY = (
-    PRODUCTIVE_HOURS_PER_DAY *
-    WORKING_DAYS_PER_MONTH *
-    MONTHS_PER_YEAR
+FULL_CAPACITY = (
+    PRODUCTIVE_HOURS_PER_DAY
+    * WORKING_DAYS_PER_MONTH
+    * MONTHS_PER_YEAR
 )
 
 
-def calculate_workforce(df, bu_parameters):
+def calculate_workforce(
+        df,
+        bu_parameters,
+        target_utilization):
 
     results = []
+
+    effective_capacity = (
+        FULL_CAPACITY
+        * target_utilization
+        / 100
+    )
 
     for _, row in df.iterrows():
 
@@ -33,83 +42,105 @@ def calculate_workforce(df, bu_parameters):
         dc_growth = params["DC"]
         attrition = params["Attrition"]
 
+        # ---------------------------------
+        # CURRENT WORKLOAD
+        # ---------------------------------
+
         current_hours = (
-
-            row["Breakdown_WO"] *
-            row["Breakdown_Hrs"]
-
+            row["Breakdown_WO"] * row["Breakdown_Hrs"]
             +
-
-            row["PM_WO"] *
-            row["PM_Hrs"]
-
+            row["PM_WO"] * row["PM_Hrs"]
             +
-
-            row["Startup_WO"] *
-            row["Startup_Hrs"]
-
+            row["Startup_WO"] * row["Startup_Hrs"]
         )
+
+        # ---------------------------------
+        # FUTURE WORKLOAD
+        # ---------------------------------
 
         future_hours = (
-
-            current_hours *
-
+            current_hours
+            *
             (
-                1 +
-                bau_growth / 100 +
-                dc_growth / 100
+                1
+                + bau_growth / 100
+                + dc_growth / 100
             )
-
         )
+
+        # ---------------------------------
+        # REQUIRED ENGINEERS
+        # ---------------------------------
 
         required_engineers = (
-
-            future_hours /
-            ANNUAL_CAPACITY
-
+            future_hours
+            /
+            effective_capacity
         )
+
+        # ---------------------------------
+        # AVAILABLE ENGINEERS
+        # ---------------------------------
 
         available_engineers = (
-
-            row["Current_SE"] *
-
+            row["Current_SE"]
+            *
             (
-                1 -
-                attrition / 100
+                1
+                - attrition / 100
             )
-
         )
+
+        # ---------------------------------
+        # HIRING GAP
+        # ---------------------------------
 
         additional_required = max(
             math.ceil(
-                required_engineers -
-                available_engineers
+                required_engineers
+                - available_engineers
             ),
             0
         )
 
         results.append({
 
-            "Region": row["Region"],
-            "Product": product,
+            "Region":
+            row["Region"],
 
-            "BAU Growth %": bau_growth,
-            "DC Surge %": dc_growth,
-            "Attrition %": attrition,
+            "Product":
+            product,
 
-            "Current Hours": round(current_hours),
-            "Future Hours": round(future_hours),
+            "BAU Growth %":
+            bau_growth,
 
-            "Required Engineers": round(
-                required_engineers, 1
-            ),
+            "DC Surge %":
+            dc_growth,
 
-            "Available Engineers": round(
-                available_engineers, 1
-            ),
+            "Attrition %":
+            attrition,
+
+            "Utilization %":
+            target_utilization,
+
+            "Engineer Capacity":
+            round(effective_capacity),
+
+            "Current Hours":
+            round(current_hours),
+
+            "Future Hours":
+            round(future_hours),
+
+            "Required Engineers":
+            round(required_engineers, 1),
+
+            "Available Engineers":
+            round(available_engineers, 1),
 
             "Additional Required":
-                additional_required
+            additional_required
+
         })
 
     return pd.DataFrame(results)
