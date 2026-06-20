@@ -1,27 +1,25 @@
 import pandas as pd
 import math
 
-PRODUCTIVE_HOURS_PER_DAY = 7
-WORKING_DAYS_PER_MONTH = 20
-MONTHS_PER_YEAR = 12
-
-FULL_CAPACITY = (
-    PRODUCTIVE_HOURS_PER_DAY *
-    WORKING_DAYS_PER_MONTH *
-    MONTHS_PER_YEAR
-)
-
 
 def calculate_workforce(
     df,
     bu_parameters,
+    productive_hours,
+    working_days,
     target_utilization
 ):
 
     results = []
 
+    annual_capacity = (
+        productive_hours *
+        working_days *
+        12
+    )
+
     effective_capacity = (
-        FULL_CAPACITY *
+        annual_capacity *
         target_utilization / 100
     )
 
@@ -42,35 +40,48 @@ def calculate_workforce(
         dc_growth = params["DC"]
         attrition = params["Attrition"]
 
+        # Current Workload
+
         current_hours = (
-            row["Breakdown_WO"] * row["Breakdown_Hrs"]
+            row["Breakdown_WO"] *
+            row["Breakdown_Hrs"]
             +
-            row["PM_WO"] * row["PM_Hrs"]
+            row["PM_WO"] *
+            row["PM_Hrs"]
             +
-            row["Startup_WO"] * row["Startup_Hrs"]
+            row["Startup_WO"] *
+            row["Startup_Hrs"]
         )
+
+        # Future Workload
 
         future_hours = (
             current_hours *
             (
                 1
-                + bau_growth/100
-                + dc_growth/100
+                + bau_growth / 100
+                + dc_growth / 100
             )
         )
+
+        # Required Engineers
 
         required_engineers = (
             future_hours /
             effective_capacity
         )
 
+        # Available Engineers
+
         available_engineers = (
             row["Current_SE"] *
             (
                 1 -
-                attrition/100
+                attrition / 100
             )
         )
+
+        # Hiring Gap
 
         additional_required = max(
             math.ceil(
@@ -83,14 +94,25 @@ def calculate_workforce(
         results.append({
 
             "Region": row["Region"],
-            "Product": row["Product"],
+            "Product": product,
 
             "BAU Growth %": bau_growth,
             "DC Surge %": dc_growth,
             "Attrition %": attrition,
-            "Utilization %": target_utilization,
 
-            "Engineer Capacity":
+            "Productive Hrs/Day":
+                productive_hours,
+
+            "Working Days/Month":
+                working_days,
+
+            "Utilization %":
+                target_utilization,
+
+            "Annual Capacity":
+                round(annual_capacity),
+
+            "Effective Capacity":
                 round(effective_capacity),
 
             "Current Hours":
