@@ -42,10 +42,8 @@ def calculate_workforce(
 
         current_hours = (
             row["Breakdown_WO"] * row["Breakdown_Hrs"]
-            +
-            row["PM_WO"] * row["PM_Hrs"]
-            +
-            row["Startup_WO"] * row["Startup_Hrs"]
+            + row["PM_WO"] * row["PM_Hrs"]
+            + row["Startup_WO"] * row["Startup_Hrs"]
         )
 
         future_hours = (
@@ -65,15 +63,14 @@ def calculate_workforce(
         available_engineers = (
             row["Current_SE"] *
             (
-                1 -
-                attrition / 100
+                1 - attrition / 100
             )
         )
 
         additional_required = max(
             math.ceil(
-                required_engineers -
-                available_engineers
+                required_engineers
+                - available_engineers
             ),
             0
         )
@@ -87,35 +84,19 @@ def calculate_workforce(
             "DC Surge %": dc_growth,
             "Attrition %": attrition,
 
-            "Productive Hrs/Day":
-                productive_hours,
+            "Productive Hrs/Day": productive_hours,
+            "Working Days/Month": working_days,
+            "Utilization %": target_utilization,
 
-            "Working Days/Month":
-                working_days,
+            "Annual Capacity": round(annual_capacity),
+            "Effective Capacity": round(effective_capacity),
 
-            "Utilization %":
-                target_utilization,
+            "Current Hours": round(current_hours),
+            "Future Hours": round(future_hours),
 
-            "Annual Capacity":
-                round(annual_capacity),
-
-            "Effective Capacity":
-                round(effective_capacity),
-
-            "Current Hours":
-                round(current_hours),
-
-            "Future Hours":
-                round(future_hours),
-
-            "Required Engineers":
-                round(required_engineers, 1),
-
-            "Available Engineers":
-                round(available_engineers, 1),
-
-            "Additional Required":
-                additional_required
+            "Required Engineers": round(required_engineers, 1),
+            "Available Engineers": round(available_engineers, 1),
+            "Additional Required": additional_required
 
         })
 
